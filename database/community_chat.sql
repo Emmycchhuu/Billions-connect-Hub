@@ -3,7 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS chat_messages (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
   username TEXT NOT NULL,
   profile_picture TEXT,
   message TEXT NOT NULL,
@@ -26,16 +26,9 @@ ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can read all chat messages" ON chat_messages
   FOR SELECT USING (true);
 
--- Policy: Users can only insert their own messages (and must be level 3+)
+-- Policy: Users can only insert their own messages
 CREATE POLICY "Users can insert their own messages" ON chat_messages
-  FOR INSERT WITH CHECK (
-    auth.uid() = user_id AND
-    EXISTS (
-      SELECT 1 FROM profiles 
-      WHERE id = auth.uid() 
-      AND level >= 3
-    )
-  );
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- Policy: Users can update their own messages (within 5 minutes)
 CREATE POLICY "Users can update their own messages" ON chat_messages
@@ -113,17 +106,67 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function to get bad words found in message
-CREATE OR REPLACE FUNCTION get_bad_words_in_message(message_text TEXT)
-RETURNS TEXT[] AS $$
-DECLARE
-  bad_words_found TEXT[];
+-- Mod Bot Questions table
+CREATE TABLE IF NOT EXISTS mod_bot_questions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  question TEXT NOT NULL,
+  correct_answer TEXT NOT NULL,
+  points_reward INTEGER DEFAULT 50,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Insert Billions-related questions
+INSERT INTO mod_bot_questions (question, correct_answer, points_reward) VALUES
+  ('What is the name of the main character in Billions?', 'Bobby Axelrod', 50),
+  ('Which hedge fund does Bobby Axelrod run?', 'Axe Capital', 50),
+  ('Who is the US Attorney trying to prosecute Bobby?', 'Chuck Rhoades', 50),
+  ('What is the name of Bobby''s wife?', 'Lara Axelrod', 50),
+  ('Which character is known as "Dollar Bill"?', 'Bill Stearn', 50),
+  ('What is the name of Chuck''s father?', 'Charles Rhoades Sr.', 50),
+  ('Which character is Bobby''s chief investment officer?', 'Wags', 50),
+  ('What is the name of the rival hedge fund?', 'Taylor Mason Capital', 50),
+  ('Which character becomes a rival to Bobby?', 'Taylor Mason', 50),
+  ('What is Chuck''s wife''s profession?', 'Psychiatrist', 50)
+ON CONFLICT DO NOTHING;
+
+-- Mod Bot Sessions table to track when questions were asked
+CREATE TABLE IF NOT EXISTS mod_bot_sessions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  question_id UUID REFERENCES mod_bot_questions(id),
+  question_text TEXT NOT NULL,
+  correct_answer TEXT NOT NULL,
+  points_reward INTEGER NOT NULL,
+  winner_user_id UUID REFERENCES profiles(id),
+  winner_username TEXT,
+  is_answered BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  answered_at TIMESTAMP WITH TIME ZONE
+);
+
+-- Function to get a random question that hasn't been asked recently
+CREATE OR REPLACE FUNCTION get_random_mod_question()
+RETURNS TABLE(
+  question_id UUID,
+  question_text TEXT,
+  correct_answer TEXT,
+  points_reward INTEGER
+) AS $$
 BEGIN
-  SELECT ARRAY_AGG(word)
-  INTO bad_words_found
-  FROM bad_words
-  WHERE LOWER(message_text) LIKE '%' || LOWER(word) || '%';
-  
-  RETURN COALESCE(bad_words_found, ARRAY[]::TEXT[]);
+  RETURN QUERY
+  SELECT 
+    mbq.id,
+    mbq.question,
+    mbq.correct_answer,
+    mbq.points_reward
+  FROM mod_bot_questions mbq
+  WHERE mbq.is_active = TRUE
+    AND mbq.id NOT IN (
+      SELECT question_id 
+      FROM mod_bot_sessions 
+      WHERE created_at > NOW() - INTERVAL '24 hours'
+    )
+  ORDER BY RANDOM()
+  LIMIT 1;
 END;
 $$ LANGUAGE plpgsql;

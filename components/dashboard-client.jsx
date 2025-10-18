@@ -13,7 +13,7 @@ import CurrencyDisplay, { PointsDisplay } from "@/components/CurrencyDisplay"
 import ReferralSystem from "@/components/ReferralSystem"
 import LevelDisplay from "@/components/LevelDisplay"
 
-export default function DashboardClient({ user, profile }) {
+export default function DashboardClient({ user, profile, leaderboard }) {
   const router = useRouter()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
@@ -271,7 +271,36 @@ export default function DashboardClient({ user, profile }) {
           </div>
           <Card className="neumorphism-card">
             <CardContent className="p-6">
-              <p className="text-slate-400 text-center">Play games to see your ranking!</p>
+              <div className="space-y-4">
+                {leaderboard?.slice(0, 5).map((player, index) => (
+                  <div key={player.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-800/30 hover:bg-slate-800/50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-yellow-400 to-orange-400 flex items-center justify-center text-sm font-bold text-white">
+                        {index + 1}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {player.profile_picture && (
+                          <div className="relative w-8 h-8 rounded-full overflow-hidden">
+                            <Image
+                              src={player.profile_picture}
+                              alt={player.username}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        )}
+                        <span className="text-slate-100 font-medium">{player.username}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <PointsDisplay points={player.total_points} size="sm" className="text-cyan-400" />
+                    </div>
+                  </div>
+                ))}
+                {(!leaderboard || leaderboard.length === 0) && (
+                  <p className="text-slate-400 text-center">Play games to see your ranking!</p>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>

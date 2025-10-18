@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Trophy, Coins, Sparkles } from "lucide-react"
+import { ArrowLeft, Trophy, Sparkles } from "lucide-react"
 import { playSound } from "@/lib/sounds"
 import Link from "next/link"
 import Image from "next/image"
@@ -170,13 +170,6 @@ export default function SpinGame({ user, profile }) {
             </Button>
           </Link>
           <div className="flex items-center gap-4">
-            <div className="bg-slate-900/50 backdrop-blur-xl border border-purple-500/20 rounded-lg px-4 py-2">
-              <div className="flex items-center gap-2">
-                <Coins className="w-4 h-4 text-purple-400" />
-                <span className="text-sm text-slate-400">Spins:</span>
-                <span className="text-lg font-bold text-purple-400">{spinsLeft}</span>
-              </div>
-            </div>
             <div className="bg-slate-900/50 backdrop-blur-xl border border-cyan-500/20 rounded-lg px-4 py-2">
               <div className="flex items-center gap-2">
                 <Trophy className="w-4 h-4 text-yellow-400" />
