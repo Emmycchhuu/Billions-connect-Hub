@@ -26,8 +26,8 @@ export default function CommunityChat({ user, profile }) {
     scrollToBottom()
   }, [messages])
 
-  // Check if user can chat (level 3+)
-  const canChat = profile?.level >= 3
+  // Check if user can chat (now open to all)
+  const canChat = true
 
   // Load messages
   const loadMessages = async () => {
@@ -182,23 +182,6 @@ export default function CommunityChat({ user, profile }) {
             <LevelDisplay user={user} profile={profile} />
           </div>
 
-          {/* Chat Access Warning */}
-          {!canChat && (
-            <Card className="neumorphism-card border-yellow-500/20 mb-6">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3">
-                  <Lock className="w-6 h-6 text-yellow-400" />
-                  <div>
-                    <h3 className="text-yellow-400 font-semibold">Chat Locked</h3>
-                    <p className="text-slate-300">
-                      You need to reach Level 3 to access community chat. 
-                      Play games to earn experience and level up!
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Chat Rules */}
           <Card className="neumorphism-card border-blue-500/20 mb-6">
@@ -275,40 +258,34 @@ export default function CommunityChat({ user, profile }) {
               </div>
 
               {/* Input Area */}
-              {canChat ? (
-                <div className="p-6 border-t border-slate-700/50">
-                  <div className="flex gap-3">
-                    <Input
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Type your message... (Twitter links allowed)"
-                      className="neumorphism-card border-cyan-500/30 text-slate-100"
-                      onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                      disabled={isLoading}
-                    />
-                    <Button
-                      onClick={handleSendMessage}
-                      disabled={!newMessage.trim() || isLoading}
-                      className="neumorphism-button px-6"
-                    >
-                      {isLoading ? (
-                        <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-                      ) : (
-                        <Send className="w-4 h-4" />
-                      )}
-                    </Button>
-                  </div>
-                  {isModerated && (
-                    <p className="text-yellow-400 text-sm mt-2">
-                      ⚠️ Your message was flagged. Please review the community guidelines.
-                    </p>
-                  )}
+              <div className="p-6 border-t border-slate-700/50">
+                <div className="flex gap-3">
+                  <Input
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Type your message... (Twitter links allowed)"
+                    className="neumorphism-card border-cyan-500/30 text-slate-100"
+                    onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                    disabled={isLoading}
+                  />
+                  <Button
+                    onClick={handleSendMessage}
+                    disabled={!newMessage.trim() || isLoading}
+                    className="neumorphism-button px-6"
+                  >
+                    {isLoading ? (
+                      <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
+                  </Button>
                 </div>
-              ) : (
-                <div className="p-6 border-t border-slate-700/50 text-center">
-                  <p className="text-slate-500">Reach Level 3 to start chatting!</p>
-                </div>
-              )}
+                {isModerated && (
+                  <p className="text-yellow-400 text-sm mt-2">
+                    ⚠️ Your message was flagged. Please review the community guidelines.
+                  </p>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>

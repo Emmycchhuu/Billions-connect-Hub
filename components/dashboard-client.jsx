@@ -237,9 +237,8 @@ export default function DashboardClient({ user, profile }) {
                 variant="outline"
                 className="neumorphism-button neon-border-purple"
                 onMouseEnter={() => playSound("hover")}
-                disabled={profile?.level < 3}
               >
-                {profile?.level >= 3 ? "Join Chat" : "Level 3 Required"}
+                Join Chat
               </Button>
             </Link>
           </div>
@@ -251,13 +250,7 @@ export default function DashboardClient({ user, profile }) {
                 <p className="text-slate-400 mb-4">
                   Connect with fellow Billions players, share strategies, and discuss gaming!
                 </p>
-                {profile?.level >= 3 ? (
-                  <p className="text-green-400 text-sm">✓ You have access to community chat</p>
-                ) : (
-                  <p className="text-yellow-400 text-sm">
-                    Reach Level 3 to unlock community chat ({3 - (profile?.level || 1)} levels to go)
-                  </p>
-                )}
+                <p className="text-green-400 text-sm">✓ Community chat is now open to all players!</p>
               </div>
             </CardContent>
           </Card>

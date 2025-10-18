@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import Image from "next/image"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -77,7 +78,15 @@ export default function LoginPage() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(6,182,212,0.1),transparent_50%)]" />
       <div className="w-full max-w-sm relative z-10">
         <Card className="glass-card border-cyan-500/20 animate-scale-in">
-          <CardHeader>
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 w-16 h-16 relative">
+              <Image
+                src="/images/billions-logo.png"
+                alt="Billions Logo"
+                fill
+                className="object-contain"
+              />
+            </div>
             <CardTitle className="text-2xl font-bold holographic animate-holographic">
               Login to Billions
             </CardTitle>

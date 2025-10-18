@@ -26,7 +26,7 @@ export default function SpinGame({ user, profile }) {
   const [isSpinning, setIsSpinning] = useState(false)
   const [totalScore, setTotalScore] = useState(0)
   const [lastWin, setLastWin] = useState(0)
-  const [spinsLeft, setSpinsLeft] = useState(5)
+  const [spinsLeft, setSpinsLeft] = useState(Infinity)
   const [currentPoints, setCurrentPoints] = useState(profile?.total_points || 0)
   const spinCost = 50
 
@@ -35,12 +35,11 @@ export default function SpinGame({ user, profile }) {
   }, [profile])
 
   const spinReels = async () => {
-    if (isSpinning || spinsLeft <= 0 || currentPoints < spinCost) return
+    if (isSpinning || currentPoints < spinCost) return
 
     playSound("click")
     setIsSpinning(true)
     setGameState("spinning")
-    setSpinsLeft(spinsLeft - 1)
 
     const newPoints = currentPoints - spinCost
     setCurrentPoints(newPoints)
@@ -140,7 +139,6 @@ export default function SpinGame({ user, profile }) {
 
   const resetGame = () => {
     playSound("click")
-    setSpinsLeft(5)
     setTotalScore(0)
     setLastWin(0)
     setGameState("ready")
@@ -153,7 +151,7 @@ export default function SpinGame({ user, profile }) {
     router.push("/dashboard")
   }
 
-  const canSpin = currentPoints >= spinCost && spinsLeft > 0
+  const canSpin = currentPoints >= spinCost
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
@@ -248,13 +246,9 @@ export default function SpinGame({ user, profile }) {
                       Spinning...
                     </span>
                   ) : !canSpin ? (
-                    spinsLeft <= 0 ? (
-                      "No Spins Left"
-                    ) : (
-                      "Not Enough Points"
-                    )
+                    "Not Enough Points"
                   ) : (
-                    `SPIN (${spinCost} pts)`
+                    `SPIN (₿${spinCost})`
                   )}
                 </Button>
               </div>
