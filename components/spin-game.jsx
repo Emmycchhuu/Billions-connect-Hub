@@ -46,6 +46,17 @@ export default function SpinGame({ user, profile }) {
 
     const supabase = createClient()
     await supabase.from("profiles").update({ total_points: newPoints }).eq("id", user.id)
+    
+    // Refresh profile data
+    const { data: updatedProfile } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single()
+    
+    if (updatedProfile) {
+      window.dispatchEvent(new CustomEvent('profileUpdated', { detail: updatedProfile }))
+    }
 
     const spinDuration = 2000
     const spinInterval = 100
@@ -111,6 +122,17 @@ export default function SpinGame({ user, profile }) {
       const finalPoints = pointsAfterSpin + winAmount
       setCurrentPoints(finalPoints)
       await supabase.from("profiles").update({ total_points: finalPoints }).eq("id", user.id)
+      
+      // Refresh profile data
+      const { data: updatedProfile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single()
+      
+      if (updatedProfile) {
+        window.dispatchEvent(new CustomEvent('profileUpdated', { detail: updatedProfile }))
+      }
     }
 
     // Add experience points
@@ -125,7 +147,7 @@ export default function SpinGame({ user, profile }) {
         })
       })
     } catch (error) {
-      console.error("Error adding experience:", error)
+      console.warn("Error adding experience:", error)
     }
 
     setTimeout(() => {

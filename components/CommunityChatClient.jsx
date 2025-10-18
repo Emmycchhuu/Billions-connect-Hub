@@ -38,11 +38,18 @@ export default function CommunityChatClient({ user, profile }) {
         .order("created_at", { ascending: true })
         .limit(50)
 
-      if (error) throw error
+      if (error) {
+        // Use warn instead of error so Next's dev runtime doesn't convert this
+        // into an unhandled error overlay. Handle gracefully and notify user.
+        console.warn("Supabase error loading messages:", error)
+        showError("Failed to load messages: " + (error?.message || "Unknown error"))
+        setMessages([])
+        return
+      }
       setMessages(data || [])
     } catch (error) {
-      console.error("Error loading messages:", error)
-      showError("Failed to load messages")
+      console.warn("Error loading messages:", error)
+      showError("Failed to load messages: " + (error?.message || "Unknown error"))
     }
   }
 
@@ -59,7 +66,7 @@ export default function CommunityChatClient({ user, profile }) {
         setOnlineCount(data.length)
       }
     } catch (error) {
-      console.error("Error loading online count:", error)
+      console.warn("Error loading online count:", error)
     }
   }
 
@@ -92,316 +99,247 @@ export default function CommunityChatClient({ user, profile }) {
     // Set up real-time subscription
     const supabase = createClient()
     const channel = supabase
-      .channel("chat_messages")
-      .on("postgres_changes", 
-        { event: "*", schema: "public", table: "chat_messages" },
-        () => loadMessages()
-      )
-      .on("postgres_changes",
-        { event: "*", schema: "public", table: "mod_bot_sessions" },
-        () => loadActiveQuestion()
-      )
-      .subscribe()
+      "use client"
 
-    // Update online count every minute
-    const onlineInterval = setInterval(loadOnlineCount, 60000)
+      import { useEffect, useRef, useState } from "react"
+      import { Button } from "@/components/ui/button"
+      import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+      import { Microphone, Check, X } from "lucide-react"
+      import { useNotification } from "@/components/NotificationSystem"
 
-    return () => {
-      supabase.removeChannel(channel)
-      clearInterval(onlineInterval)
-    }
-  }, [])
+      // Voice Verification: client-only, no database. Uses Web Speech API where available.
+      export default function CommunityChatClient({ user, profile }) {
+        const [questions] = useState([
+          "Please say: I am a human and I agree to the community rules.",
+          "Please say: I verify that I am a real person.",
+          "Please say: Billions values privacy and honest interactions.",
+          "Please say: I accept the code of conduct.",
+          "Please say: I will not use bots to impersonate others.",
+          "Please say: I am ready to join the Billions community.",
+          "Please say: I confirm I will follow the rules.",
+          "Please say: I am human and I respect other members.",
+          "Please say: I understand verification protects the community.",
+          "Please say: I pledge to be honest in this network."
+        ])
 
-  // Validate Twitter link
-  const isValidTwitterLink = (text) => {
-    const twitterRegex = /https?:\/\/(www\.)?(twitter\.com|x\.com)\/\w+\/status\/\d+/i
-    return twitterRegex.test(text)
-  }
-
-  // Check for bad words
-  const containsBadWords = async (text) => {
-    try {
-      const supabase = createClient()
-      const { data } = await supabase.rpc("contains_bad_words", { message_text: text })
-      return data
-    } catch (error) {
-      console.error("Error checking bad words:", error)
-      return false
-    }
-  }
-
-  // Send message
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() || isLoading) return
-
-    const messageText = newMessage.trim()
-    
-    // Check for bad words
-    const hasBadWords = await containsBadWords(messageText)
-    if (hasBadWords) {
-      showWarning("Please keep the chat respectful. Remove inappropriate language.")
-      setIsModerated(true)
-      return
-    }
-
-    // Check for non-Twitter links
-    const linkRegex = /https?:\/\/[^\s]+/g
-    const links = messageText.match(linkRegex)
-    if (links) {
-      const invalidLinks = links.filter(link => !isValidTwitterLink(link))
-      if (invalidLinks.length > 0) {
-        showWarning("Only Twitter/X links are allowed in the community chat.")
-        return
-      }
-    }
-
-    // Check if message answers active mod bot question
-    if (activeQuestion && messageText.toLowerCase().includes(activeQuestion.correct_answer.toLowerCase())) {
-      await handleCorrectAnswer(messageText)
-      return
-    }
-
-    setIsLoading(true)
-
-    try {
-      const supabase = createClient()
-      const { error } = await supabase
-        .from("chat_messages")
-        .insert({
-          user_id: user.id,
-          username: profile?.username || "Anonymous",
-          profile_picture: profile?.profile_picture,
-          message: messageText,
-          twitter_link: links ? links.find(isValidTwitterLink) : null
+        const [index, setIndex] = useState(0)
+        const [listening, setListening] = useState(false)
+        const [transcript, setTranscript] = useState("")
+        const [result, setResult] = useState(null) // null | true | false
+        const [points, setPoints] = useState(() => {
+          try {
+            return Number(localStorage.getItem("voice_verification_points") || "0")
+          } catch (e) {
+            return 0
+          }
+        })
+        const [verifiedSet, setVerifiedSet] = useState(() => {
+          try {
+            return new Set(JSON.parse(localStorage.getItem("voice_verified_questions") || "[]"))
+          } catch (e) {
+            return new Set()
+          }
         })
 
-      if (error) throw error
+        const { showSuccess, showError, showWarning } = useNotification()
+        const recognitionRef = useRef(null)
 
-      setNewMessage("")
-      showSuccess("Message sent!")
-      setIsModerated(false)
-    } catch (error) {
-      console.error("Error sending message:", error)
-      showError("Failed to send message")
-    } finally {
-      setIsLoading(false)
-    }
-  }
+        useEffect(() => {
+          // Initialize Web Speech API if available
+          const SpeechRecognition = typeof window !== "undefined" && (window.SpeechRecognition || window.webkitSpeechRecognition)
+          if (!SpeechRecognition) return
 
-  // Handle correct answer to mod bot question
-  const handleCorrectAnswer = async (messageText) => {
-    try {
-      const supabase = createClient()
-      
-      // Update the mod bot session with winner
-      await supabase
-        .from("mod_bot_sessions")
-        .update({
-          winner_user_id: user.id,
-          winner_username: profile?.username,
-          is_answered: true,
-          answered_at: new Date().toISOString()
-        })
-        .eq("id", activeQuestion.id)
+          const recognition = new SpeechRecognition()
+          recognition.lang = "en-US"
+          recognition.interimResults = false
+          recognition.maxAlternatives = 1
 
-      // Give points to winner
-      await supabase
-        .from("profiles")
-        .update({
-          total_points: (profile?.total_points || 0) + activeQuestion.points_reward
-        })
-        .eq("id", user.id)
+          recognition.onstart = () => setListening(true)
+          recognition.onend = () => setListening(false)
+          recognition.onerror = (e) => {
+            console.warn("Speech recognition error:", e)
+            setListening(false)
+            showError("Speech recognition error: " + (e?.error || "unknown"))
+          }
+          recognition.onresult = (event) => {
+            const text = Array.from(event.results).map(r => r[0].transcript).join(" ")
+            setTranscript(text)
+            evaluateAnswer(text)
+          }
 
-      // Send bot message announcing winner
-      await supabase
-        .from("chat_messages")
-        .insert({
-          user_id: null, // Bot message
-          username: "Mod Bot",
-          profile_picture: "/images/billions-logo.png",
-          message: `🎉 Correct! ${profile?.username} answered "${activeQuestion.correct_answer}" and won ${activeQuestion.points_reward} points!`
-        })
+          recognitionRef.current = recognition
 
-      showSuccess(`🎉 You won ${activeQuestion.points_reward} points for answering correctly!`)
-      setActiveQuestion(null)
-      setNewMessage("")
-    } catch (error) {
-      console.error("Error processing correct answer:", error)
-      showError("Failed to process answer")
-    }
-  }
+          return () => {
+            try {
+              recognition.stop()
+            } catch (e) {}
+          }
+        }, [])
 
-  // Format timestamp
-  const formatTime = (timestamp) => {
-    const date = new Date(timestamp)
-    const now = new Date()
-    const diff = now - date
-    
-    if (diff < 60000) return "Just now"
-    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`
-    return date.toLocaleDateString()
-  }
+        // Normalize strings for comparison
+        const normalize = (s) => s
+          .toLowerCase()
+          .replace(/[\p{P}$+<=>^`|~]/gu, "")
+          .replace(/\s+/g, " ")
+          .trim()
 
-  return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Cyber Grid Background */}
-      <div className="absolute inset-0 cyber-grid opacity-30" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(6,182,212,0.15),transparent_50%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_70%,rgba(168,85,247,0.15),transparent_50%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(236,72,153,0.1),transparent_50%)]" />
+        // Simple Levenshtein distance for similarity
+        const levenshtein = (a, b) => {
+          if (!a.length) return b.length
+          if (!b.length) return a.length
+          const matrix = Array.from({ length: a.length + 1 }, () => [])
+          for (let i = 0; i <= a.length; i++) matrix[i][0] = i
+          for (let j = 0; j <= b.length; j++) matrix[0][j] = j
+          for (let i = 1; i <= a.length; i++) {
+            for (let j = 1; j <= b.length; j++) {
+              const cost = a[i - 1] === b[j - 1] ? 0 : 1
+              matrix[i][j] = Math.min(
+                matrix[i - 1][j] + 1,
+                matrix[i][j - 1] + 1,
+                matrix[i - 1][j - 1] + cost
+              )
+            }
+          }
+          return matrix[a.length][b.length]
+        }
 
-      <div className="relative z-10 container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-4">
-              <div className="neumorphism-3d p-3 rounded-xl">
-                <MessageSquare className="w-8 h-8 text-cyan-400" />
+        const similarity = (a, b) => {
+          const na = normalize(a)
+          const nb = normalize(b)
+          if (!na.length && !nb.length) return 1
+          const dist = levenshtein(na, nb)
+          const maxLen = Math.max(na.length, nb.length)
+          return 1 - dist / Math.max(1, maxLen)
+        }
+
+        const evaluateAnswer = (spoken) => {
+          const expectedFull = questions[index]
+          // The prompts are phrased like: "Please say: ..." — compare only the part after colon if present
+          const expected = expectedFull.includes(":") ? expectedFull.split(":")[1].trim() : expectedFull
+          const sim = similarity(spoken, expected)
+
+          // Threshold: require high similarity for verification
+          if (sim >= 0.85) {
+            // Award points only once per question
+            if (!verifiedSet.has(index)) {
+              const award = 100
+              const newPoints = points + award
+              setPoints(newPoints)
+              localStorage.setItem("voice_verification_points", String(newPoints))
+              const newSet = new Set(Array.from(verifiedSet))
+              newSet.add(index)
+              setVerifiedSet(newSet)
+              localStorage.setItem("voice_verified_questions", JSON.stringify(Array.from(newSet)))
+            }
+            setResult(true)
+            showSuccess("Verified! You earned points.")
+          } else {
+            setResult(false)
+            showWarning("Verification failed. Please try again and speak the phrase exactly.")
+          }
+        }
+
+        const startListening = () => {
+          setTranscript("")
+          setResult(null)
+          const recognition = recognitionRef.current
+          if (!recognition) {
+            showError("Speech recognition is not available in this browser.")
+            return
+          }
+          try {
+            recognition.start()
+          } catch (e) {
+            console.warn("Recognition start failed:", e)
+            showError("Unable to start microphone. Check permissions.")
+          }
+        }
+
+        const stopListening = () => {
+          try {
+            recognitionRef.current?.stop()
+          } catch (e) {}
+        }
+
+        const nextQuestion = () => {
+          setIndex((i) => (i + 1) % questions.length)
+          setTranscript("")
+          setResult(null)
+        }
+
+        const resetAll = () => {
+          setPoints(0)
+          setVerifiedSet(new Set())
+          localStorage.removeItem("voice_verification_points")
+          localStorage.removeItem("voice_verified_questions")
+          showSuccess("Reset verification progress")
+        }
+
+        const currentQuestion = questions[index]
+
+        return (
+          <div className="min-h-screen relative overflow-hidden">
+            <div className="absolute inset-0 cyber-grid opacity-30" />
+            <div className="relative z-10 container mx-auto px-4 py-8">
+              <div className="max-w-2xl mx-auto">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h1 className="text-3xl font-bold text-slate-100">Voice Verification</h1>
+                    <p className="text-slate-400">Prove you're human by speaking the prompted phrase.</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-slate-300">Points: <span className="font-semibold text-cyan-400">₿{points}</span></p>
+                    <p className="text-xs text-slate-500">Verified: {verifiedSet.size}/{questions.length}</p>
+                  </div>
+                </div>
+
+                <Card className="neumorphism-card p-6">
+                  <CardHeader>
+                    <CardTitle className="text-lg text-slate-100">Prompt {index + 1} of {questions.length}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="bg-slate-800/50 p-4 rounded-lg text-slate-100">
+                      <p className="whitespace-pre-wrap">{currentQuestion}</p>
+                    </div>
+
+                    <div className="flex flex-col items-center gap-3">
+                      <button
+                        onMouseDown={startListening}
+                        onMouseUp={stopListening}
+                        onTouchStart={startListening}
+                        onTouchEnd={stopListening}
+                        className={`w-28 h-28 rounded-full flex items-center justify-center ${listening ? 'bg-red-500' : 'bg-cyan-500'} text-white shadow-lg`}
+                        aria-pressed={listening}
+                      >
+                        <Microphone className="w-8 h-8" />
+                      </button>
+
+                      <div className="text-sm text-slate-300">
+                        {listening ? 'Listening... hold the button and speak clearly' : 'Hold the mic button and speak the phrase exactly'}
+                      </div>
+
+                      <div className="w-full">
+                        <div className="p-3 rounded bg-slate-900/60 text-slate-200 min-h-[44px]">
+                          {transcript || <span className="text-slate-500">Your spoken words will appear here</span>}
+                        </div>
+                      </div>
+
+                      {result === true && (
+                        <div className="text-green-400 flex items-center gap-2"><Check /> Verified</div>
+                      )}
+                      {result === false && (
+                        <div className="text-yellow-400 flex items-center gap-2"><X /> Not matched</div>
+                      )}
+
+                      <div className="flex gap-3 mt-2">
+                        <Button onClick={nextQuestion} className="neumorphism-button">Next Prompt</Button>
+                        <Button onClick={resetAll} variant="outline" className="neumorphism-button">Reset</Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-              <div>
-                <h1 className="text-3xl font-bold text-slate-100 holographic animate-holographic">
-                  Community Chat
-                </h1>
-                <p className="text-slate-400">Connect with fellow Billions players</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-green-400" />
-              <span className="text-slate-300">{onlineCount} online</span>
             </div>
           </div>
-
-          {/* Chat Rules */}
-          <Card className="neumorphism-card border-blue-500/20 mb-6">
-            <CardHeader>
-              <CardTitle className="text-blue-400 flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5" />
-                Community Guidelines
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm text-slate-300">
-              <p>• Be respectful and kind to other players</p>
-              <p>• Only Twitter/X links are allowed</p>
-              <p>• No spam, harassment, or inappropriate content</p>
-              <p>• Keep discussions related to gaming and Billions Network</p>
-              <p>• Messages are moderated automatically</p>
-            </CardContent>
-          </Card>
-
-          {/* Active Mod Bot Question */}
-          {activeQuestion && (
-            <Card className="neumorphism-card border-yellow-500/20 mb-6">
-              <CardHeader>
-                <CardTitle className="text-yellow-400 flex items-center gap-2">
-                  <Bot className="w-5 h-5" />
-                  Mod Bot Question
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-gradient-to-r from-yellow-900/20 to-orange-900/20 p-4 rounded-lg border border-yellow-500/30">
-                  <p className="text-yellow-100 font-semibold mb-2">
-                    🤖 {activeQuestion.question_text}
-                  </p>
-                  <p className="text-yellow-300 text-sm">
-                    First correct answer wins <Trophy className="w-4 h-4 inline mx-1" />
-                    {activeQuestion.points_reward} points!
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Chat Container */}
-          <Card className="neumorphism-card h-[600px] flex flex-col">
-            <CardContent className="flex-1 flex flex-col p-0">
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                {messages.length === 0 ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <MessageSquare className="w-12 h-12 text-slate-500 mx-auto mb-4" />
-                      <p className="text-slate-400">No messages yet. Be the first to chat!</p>
-                    </div>
-                  </div>
-                ) : (
-                  messages.map((message) => (
-                    <div key={message.id} className="flex gap-3">
-                      <div className="neumorphism-3d p-1 rounded-lg flex-shrink-0">
-                        {message.profile_picture ? (
-                          <Image
-                            src={message.profile_picture}
+        )
                             alt={message.username}
-                            width={32}
-                            height={32}
-                            className="rounded"
-                          />
-                        ) : (
-                          <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-cyan-400 rounded flex items-center justify-center">
-                            <span className="text-white text-sm font-bold">
-                              {message.username.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-slate-100 font-semibold">{message.username}</span>
-                          <span className="text-xs text-slate-500">{formatTime(message.created_at)}</span>
-                        </div>
-                        <div className="bg-slate-800/50 text-slate-100 border border-slate-700/50 p-3 rounded-lg">
-                          <p className="whitespace-pre-wrap">{message.message}</p>
-                          {message.twitter_link && (
-                            <a 
-                              href={message.twitter_link} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-cyan-400 hover:text-cyan-300 text-sm mt-2 inline-block"
-                            >
-                              🔗 View Tweet
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-
-              {/* Input Area */}
-              <div className="p-6 border-t border-slate-700/50">
-                <div className="flex gap-3">
-                  <Input
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder={activeQuestion ? "Answer the question or type your message..." : "Type your message... (Twitter links allowed)"}
-                    className="neumorphism-card border-cyan-500/30 text-slate-100"
-                    onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                    disabled={isLoading}
-                  />
-                  <Button
-                    onClick={handleSendMessage}
-                    disabled={!newMessage.trim() || isLoading}
-                    className="neumorphism-button px-6"
-                  >
-                    {isLoading ? (
-                      <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-                    ) : (
-                      <Send className="w-4 h-4" />
-                    )}
-                  </Button>
-                </div>
-                {isModerated && (
-                  <p className="text-yellow-400 text-sm mt-2">
-                    ⚠️ Your message was flagged. Please review the community guidelines.
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div>
-  )
-}

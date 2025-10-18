@@ -74,7 +74,7 @@ export default function LevelDisplay({ user, profile, className = "" }) {
         })
       }
     } catch (error) {
-      console.error("Error fetching level data:", error)
+      console.warn("Error fetching level data:", error)
     }
   }
 

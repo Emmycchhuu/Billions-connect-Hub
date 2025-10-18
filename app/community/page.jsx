@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import CommunityChatClient from "@/components/CommunityChatClient"
+import dynamic from "next/dynamic"
+
+const VoiceVerification = dynamic(() => import("@/components/VoiceVerification"), { ssr: false })
 
 export default async function CommunityPage() {
   const supabase = await createClient()
@@ -15,5 +17,5 @@ export default async function CommunityPage() {
 
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
 
-  return <CommunityChatClient user={user} profile={profile} />
+  return <VoiceVerification user={user} profile={profile} />
 }

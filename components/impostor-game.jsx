@@ -120,6 +120,18 @@ export default function ImpostorGame({ user, profile }) {
         .update({ total_points: (profile?.total_points || 0) + pointsEarned })
         .eq("id", user.id)
 
+      // Refresh profile data
+      const { data: updatedProfile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single()
+      
+      if (updatedProfile) {
+        // Update the profile in the parent component
+        window.dispatchEvent(new CustomEvent('profileUpdated', { detail: updatedProfile }))
+      }
+
       // Add experience points
       try {
         await fetch("/api/add-experience", {
@@ -132,7 +144,7 @@ export default function ImpostorGame({ user, profile }) {
           })
         })
       } catch (error) {
-        console.error("Error adding experience:", error)
+        console.warn("Error adding experience:", error)
       }
     } else {
       playSound("lose")
@@ -160,7 +172,7 @@ export default function ImpostorGame({ user, profile }) {
           })
         })
       } catch (error) {
-        console.error("Error adding experience:", error)
+        console.warn("Error adding experience:", error)
       }
     }
   }
