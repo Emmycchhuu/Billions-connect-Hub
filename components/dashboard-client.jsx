@@ -6,14 +6,15 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { LogOut, Trophy, Gamepad2, User, Users, Gift, Shield } from "lucide-react"
+import { LogOut, Trophy, Gamepad2, User, Shield } from "lucide-react"
 import { playSound } from "@/lib/sounds"
 import Image from "next/image"
 import CurrencyDisplay, { PointsDisplay } from "@/components/CurrencyDisplay"
-import ReferralSystem from "@/components/ReferralSystem"
-import LevelDisplay from "@/components/LevelDisplay" // <-- Add this line
+import dynamic from "next/dynamic"
 
-// ...existing code...
+// Lazy load heavy components to prevent hydration errors
+const ReferralSystem = dynamic(() => import("@/components/ReferralSystem"), { ssr: false })
+const LevelDisplay = dynamic(() => import("@/components/LevelDisplay"), { ssr: false })
 
 export default function DashboardClient({ user, profile, leaderboard }) {
   const router = useRouter()
@@ -24,6 +25,12 @@ export default function DashboardClient({ user, profile, leaderboard }) {
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push("/")
+  }
+
+  const colorClasses = {
+    cyan: "text-cyan-400",
+    purple: "text-purple-400",
+    pink: "text-pink-400",
   }
 
   const games = [
@@ -58,13 +65,14 @@ export default function DashboardClient({ user, profile, leaderboard }) {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Cyber Grid Background */}
+      {/* Background Layers */}
       <div className="absolute inset-0 cyber-grid opacity-30" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(6,182,212,0.15),transparent_50%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_70%,rgba(168,85,247,0.15),transparent_50%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(236,72,153,0.1),transparent_50%)]" />
 
       <div className="relative z-10 container mx-auto px-4 py-8">
+        {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-12">
           <div className="flex items-center gap-4">
             <div className="neumorphism-3d p-2 rounded-xl">
@@ -80,15 +88,18 @@ export default function DashboardClient({ user, profile, leaderboard }) {
               <h1 className="text-3xl md:text-4xl font-bold holographic animate-holographic mb-2">
                 Gaming Hub
               </h1>
-              <p className="text-slate-400 text-sm md:text-base">Welcome back, {profile?.username || "Agent"}</p>
+              <p className="text-slate-400 text-sm md:text-base">
+                Welcome back, {profile?.username || "Agent"}
+              </p>
             </div>
           </div>
+
           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
             <div className="neumorphism-card px-4 md:px-6 py-2 md:py-3 flex-1 md:flex-none">
               <div className="flex items-center gap-2 justify-center">
                 <Trophy className="w-4 h-4 md:w-5 md:h-5 text-yellow-400" />
-                <PointsDisplay 
-                  points={profile?.total_points || 0} 
+                <PointsDisplay
+                  points={profile?.total_points || 0}
                   size="2xl"
                   className="text-cyan-400"
                 />
@@ -106,7 +117,9 @@ export default function DashboardClient({ user, profile, leaderboard }) {
           </div>
         </div>
 
+        {/* Stats Cards */}
         <div className="grid md:grid-cols-3 gap-6 mb-12">
+          {/* Profile */}
           <Card className="neumorphism-card hover:neumorphism-3d transition-all duration-300 hover:scale-105 group">
             <CardHeader className="pb-4">
               <CardTitle className="text-cyan-400 flex items-center gap-2">
@@ -118,19 +131,25 @@ export default function DashboardClient({ user, profile, leaderboard }) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
-                {profile?.profile_picture && (
+                {profile?.profile_picture ? (
                   <div className="relative w-16 h-16 rounded-full overflow-hidden neumorphism-3d group-hover:scale-110 transition-transform duration-300">
                     <Image
-                      src={profile.profile_picture || "/placeholder.svg"}
-                      alt={profile.username}
+                      src={profile.profile_picture}
+                      alt={profile?.username || "User"}
                       fill
                       className="object-cover"
                     />
                   </div>
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-slate-700 flex items-center justify-center text-slate-400">
+                    <User className="w-6 h-6" />
+                  </div>
                 )}
                 <div>
-                  <p className="text-2xl font-bold text-slate-100 group-hover:text-cyan-400 transition-colors">{profile?.username || "Agent"}</p>
-                  <p className="text-sm text-slate-400">{user.email}</p>
+                  <p className="text-2xl font-bold text-slate-100 group-hover:text-cyan-400 transition-colors">
+                    {profile?.username || "Agent"}
+                  </p>
+                  <p className="text-sm text-slate-400">{user?.email || "No email"}</p>
                 </div>
               </div>
               <Link href="/profile">
@@ -144,7 +163,8 @@ export default function DashboardClient({ user, profile, leaderboard }) {
               </Link>
             </CardContent>
           </Card>
-          
+
+          {/* Points */}
           <Card className="neumorphism-card hover:neumorphism-3d transition-all duration-300 hover:scale-105 group">
             <CardHeader className="pb-4">
               <CardTitle className="text-purple-400 flex items-center gap-2">
@@ -156,8 +176,8 @@ export default function DashboardClient({ user, profile, leaderboard }) {
             </CardHeader>
             <CardContent>
               <div className="text-center">
-                <PointsDisplay 
-                  points={profile?.total_points || 0} 
+                <PointsDisplay
+                  points={profile?.total_points || 0}
                   size="3xl"
                   className="text-slate-100 group-hover:text-purple-400 transition-colors"
                 />
@@ -165,7 +185,8 @@ export default function DashboardClient({ user, profile, leaderboard }) {
               </div>
             </CardContent>
           </Card>
-          
+
+          {/* Games */}
           <Card className="neumorphism-card hover:neumorphism-3d transition-all duration-300 hover:scale-105 group">
             <CardHeader className="pb-4">
               <CardTitle className="text-pink-400 flex items-center gap-2">
@@ -185,15 +206,20 @@ export default function DashboardClient({ user, profile, leaderboard }) {
         </div>
 
         {/* Referral System */}
-        <div className="mb-8">
-          <ReferralSystem user={user} profile={profile} />
-        </div>
+        {user && profile && (
+          <div className="mb-8">
+            <ReferralSystem user={user} profile={profile} />
+          </div>
+        )}
 
         {/* Level Display */}
-        <div className="mb-8">
-          <LevelDisplay user={user} profile={profile} />
-        </div>
+        {user && profile && (
+          <div className="mb-8">
+            <LevelDisplay user={user} profile={profile} />
+          </div>
+        )}
 
+        {/* Games Grid */}
         <div>
           <h2 className="text-2xl font-bold text-slate-100 mb-6 holographic animate-holographic">Choose Your Game</h2>
           <div className="grid md:grid-cols-3 gap-8">
@@ -207,7 +233,7 @@ export default function DashboardClient({ user, profile, leaderboard }) {
                 <Card className="neumorphism-card hover:neumorphism-3d transition-all duration-300 hover:scale-105 cursor-pointer group overflow-hidden">
                   <div className="relative h-64 overflow-hidden">
                     <Image
-                      src={game.image || "/placeholder.svg"}
+                      src={game.image}
                       alt={game.title}
                       fill
                       className="object-cover group-hover:scale-110 transition-transform duration-500"
@@ -215,13 +241,13 @@ export default function DashboardClient({ user, profile, leaderboard }) {
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent" />
                   </div>
                   <CardHeader>
-                    <CardTitle className={`text-${game.color}-400 text-xl`}>{game.title}</CardTitle>
+                    <CardTitle className={`${colorClasses[game.color]} text-xl`}>{game.title}</CardTitle>
                     <CardDescription className="text-slate-400">{game.description}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-slate-400">Earn:</span>
-                      <span className={`text-${game.color}-400 font-semibold`}>{game.points}</span>
+                      <span className={`${colorClasses[game.color]} font-semibold`}>{game.points}</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -258,6 +284,7 @@ export default function DashboardClient({ user, profile, leaderboard }) {
           </Card>
         </div>
 
+        {/* Leaderboard */}
         <div className="mt-12">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-slate-100 holographic animate-holographic">Leaderboard</h2>
@@ -274,33 +301,43 @@ export default function DashboardClient({ user, profile, leaderboard }) {
           <Card className="neumorphism-card">
             <CardContent className="p-6">
               <div className="space-y-4">
-                {leaderboard?.slice(0, 5).map((player, index) => (
-                  <div key={player.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-800/30 hover:bg-slate-800/50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-yellow-400 to-orange-400 flex items-center justify-center text-sm font-bold text-white">
-                        {index + 1}
+                {leaderboard?.length ? (
+                  leaderboard.slice(0, 5).map((player, index) => (
+                    <div
+                      key={player.id || index}
+                      className="flex items-center justify-between p-3 rounded-lg bg-slate-800/30 hover:bg-slate-800/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-yellow-400 to-orange-400 flex items-center justify-center text-sm font-bold text-white">
+                          {index + 1}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {player.profile_picture && (
+                            <div className="relative w-8 h-8 rounded-full overflow-hidden">
+                              <Image
+                                src={player.profile_picture}
+                                alt={player.username}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                          )}
+                          <span className="text-slate-100 font-medium">{player.username}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {player.profile_picture && (
-                          <div className="relative w-8 h-8 rounded-full overflow-hidden">
-                            <Image
-                              src={player.profile_picture}
-                              alt={player.username}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                        )}
-                        <span className="text-slate-100 font-medium">{player.username}</span>
+                      <div className="text-right">
+                        <PointsDisplay
+                          points={player.total_points || 0}
+                          size="sm"
+                          className="text-cyan-400"
+                        />
                       </div>
                     </div>
-                    <div className="text-right">
-                      <PointsDisplay points={player.total_points} size="sm" className="text-cyan-400" />
-                    </div>
-                  </div>
-                ))}
-                {(!leaderboard || leaderboard.length === 0) && (
-                  <p className="text-slate-400 text-center">Play games to see your ranking!</p>
+                  ))
+                ) : (
+                  <p className="text-slate-400 text-center">
+                    Play games to see your ranking!
+                  </p>
                 )}
               </div>
             </CardContent>
