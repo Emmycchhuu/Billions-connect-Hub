@@ -11,7 +11,6 @@ import { ArrowLeft, Save, User, Trash2, AlertTriangle } from "lucide-react"
 import { playSound } from "@/lib/sounds"
 import Link from "next/link"
 import Image from "next/image"
-import LevelDisplay from "@/components/LevelDisplay"
 
 const avatarOptions = [
   "/images/avatar-1.jpeg",
@@ -32,6 +31,60 @@ export default function ProfileEditClient({ user, profile }) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState("")
+  const [isUploading, setIsUploading] = useState(false)
+
+  const handleImageUpload = async (event) => {
+    const file = event.target.files[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setMessage("Please select a valid image file")
+      playSound("lose")
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage("Image size must be less than 5MB")
+      playSound("lose")
+      return
+    }
+
+    setIsUploading(true)
+    setMessage("")
+
+    try {
+      // Convert to base64 for storage
+      const reader = new FileReader()
+      reader.onload = async (e) => {
+        const base64 = e.target.result
+        
+        const supabase = createClient()
+        const { error } = await supabase
+          .from("profiles")
+          .update({ profile_picture: base64 })
+          .eq("id", user.id)
+
+        if (error) {
+          setMessage("Failed to upload image: " + error.message)
+          playSound("lose")
+        } else {
+          setSelectedAvatar(base64)
+          setMessage("Profile picture updated successfully!")
+          playSound("win")
+          // Refresh the page to show updated profile picture
+          window.location.reload()
+        }
+        setIsUploading(false)
+      }
+      reader.readAsDataURL(file)
+    } catch (error) {
+      setMessage("Failed to upload image")
+      playSound("lose")
+      setIsUploading(false)
+    }
+  }
 
   const handleSave = async () => {
     if (!username.trim()) {
@@ -59,7 +112,7 @@ export default function ProfileEditClient({ user, profile }) {
       setMessage("Profile updated successfully!")
       playSound("win")
       setTimeout(() => {
-        router.push("/dashboard")
+        window.location.reload()
       }, 1500)
     }
 
@@ -128,10 +181,6 @@ export default function ProfileEditClient({ user, profile }) {
             <p className="text-slate-400 text-lg neon-text-purple animate-neon-pulse">Customize your gaming identity</p>
           </div>
 
-          {/* Level Display */}
-          <div className="mb-8">
-            <LevelDisplay user={user} profile={profile} />
-          </div>
 
           <Card className="glass-card border-purple-500/20 animate-scale-in">
             <CardHeader>
@@ -155,8 +204,40 @@ export default function ProfileEditClient({ user, profile }) {
                 />
               </div>
 
+
               <div className="space-y-4">
                 <Label className="text-slate-300">Choose Your Avatar</Label>
+                
+                {/* Upload Option */}
+                <div className="mb-4">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    id="profile-upload"
+                  />
+                  <label
+                    htmlFor="profile-upload"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg cursor-pointer transition-colors text-slate-200 neumorphism-button"
+                  >
+                    <User className="w-4 h-4" />
+                    {isUploading ? "Uploading..." : "Upload from Device"}
+                  </label>
+                </div>
+
+                {/* Current Profile Picture */}
+                <div className="flex justify-center mb-4">
+                  <div className="relative w-24 h-24 rounded-full overflow-hidden neumorphism-3d">
+                    <Image
+                      src={selectedAvatar || "/placeholder.svg"}
+                      alt="Current Profile Picture"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-4 md:grid-cols-7 gap-4">
                   {avatarOptions.map((avatar, index) => (
                     <button

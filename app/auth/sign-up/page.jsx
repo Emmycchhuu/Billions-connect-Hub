@@ -132,6 +132,7 @@ function SignUpForm() {
                     className="neumorphism-card border-purple-500/30 text-slate-100 placeholder:text-slate-500"
                   />
                 </div>
+
                 <div className="grid gap-2">
                   <Label htmlFor="email" className="text-slate-200">
                     Email

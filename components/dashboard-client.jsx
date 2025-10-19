@@ -6,12 +6,11 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { LogOut, Trophy, Gamepad2, User, Users, Gift } from "lucide-react"
+import { LogOut, Trophy, Gamepad2, User, Users, Gift, Shield } from "lucide-react"
 import { playSound } from "@/lib/sounds"
 import Image from "next/image"
 import CurrencyDisplay, { PointsDisplay } from "@/components/CurrencyDisplay"
 import ReferralSystem from "@/components/ReferralSystem"
-import LevelDisplay from "@/components/LevelDisplay"
 
 export default function DashboardClient({ user, profile, leaderboard }) {
   const router = useRouter()
@@ -228,29 +227,29 @@ export default function DashboardClient({ user, profile, leaderboard }) {
           </div>
         </div>
 
-        {/* Community Chat */}
+        {/* Voice Verification */}
         <div className="mt-12">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-slate-100 holographic animate-holographic">Community</h2>
+            <h2 className="text-2xl font-bold text-slate-100 holographic animate-holographic">Human Verification</h2>
             <Link href="/community">
               <Button
                 variant="outline"
                 className="neumorphism-button neon-border-purple"
                 onMouseEnter={() => playSound("hover")}
               >
-                Join Chat
+                Verify Identity
               </Button>
             </Link>
           </div>
           <Card className="neumorphism-card">
             <CardContent className="p-6">
               <div className="text-center">
-                <Users className="w-12 h-12 text-purple-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-slate-100 mb-2">Community Chat</h3>
+                <Shield className="w-12 h-12 text-purple-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-slate-100 mb-2">Voice Verification</h3>
                 <p className="text-slate-400 mb-4">
-                  Connect with fellow Billions players, share strategies, and discuss gaming!
+                  Prove your humanity through advanced voice biometrics. Essential for Billions Network security.
                 </p>
-                <p className="text-green-400 text-sm">✓ Community chat is now open to all players!</p>
+                <p className="text-green-400 text-sm">✓ Get your custom verification card!</p>
               </div>
             </CardContent>
           </Card>
