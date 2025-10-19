@@ -13,6 +13,13 @@ export default function DashboardClient({ user, profile }) {
   const { showSuccess, showError } = useNotification()
   const [loading, setLoading] = useState(false)
   const [userData, setUserData] = useState(profile || null)
+  const [origin, setOrigin] = useState("") // ✅ for client-side window.origin
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setOrigin(window.location.origin)
+    }
+  }, [])
 
   useEffect(() => {
     if (!user || !user.id) return
@@ -96,7 +103,9 @@ export default function DashboardClient({ user, profile }) {
               <p>Invite friends to join Billions using your referral link:</p>
               <div className="mt-3 p-3 bg-purple-900/20 border border-purple-500/20 rounded-lg">
                 <code className="break-words text-purple-300">
-                  {`${window.location.origin}/auth/sign-up?ref=${userData?.referral_code || ""}`}
+                  {origin
+                    ? `${origin}/auth/sign-up?ref=${userData?.referral_code || ""}`
+                    : "Loading..."}
                 </code>
               </div>
             </CardContent>
@@ -119,7 +128,6 @@ export default function DashboardClient({ user, profile }) {
           </Card>
         </div>
 
-        {/* Link Back */}
         <div className="text-center mt-10">
           <Link href="/" className="text-purple-400 hover:text-purple-300 underline underline-offset-4">
             ← Back to Home
