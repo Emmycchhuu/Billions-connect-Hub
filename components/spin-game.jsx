@@ -147,7 +147,7 @@ export default function SpinGame({ user, profile }) {
         })
       })
     } catch (error) {
-      console.warn("Error adding experience:", error)
+      console.error("Error adding experience:", error)
     }
 
     setTimeout(() => {

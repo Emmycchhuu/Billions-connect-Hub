@@ -11,6 +11,9 @@ import { playSound } from "@/lib/sounds"
 import Image from "next/image"
 import CurrencyDisplay, { PointsDisplay } from "@/components/CurrencyDisplay"
 import ReferralSystem from "@/components/ReferralSystem"
+import LevelDisplay from "@/components/LevelDisplay" // <-- Add this line
+
+// ...existing code...
 
 export default function DashboardClient({ user, profile, leaderboard }) {
   const router = useRouter()

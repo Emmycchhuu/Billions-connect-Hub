@@ -306,7 +306,7 @@ export default function QuizGame({ user, profile }) {
         })
       })
     } catch (error) {
-      console.warn("Error adding experience:", error)
+      console.error("Error adding experience:", error)
     }
   }
 

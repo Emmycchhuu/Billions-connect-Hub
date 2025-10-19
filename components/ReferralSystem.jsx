@@ -50,7 +50,7 @@ export default function ReferralSystem({ user, profile }) {
         setReferralEarnings(referrals.referral_earnings || 0)
       }
     } catch (error) {
-      console.warn("Error loading referral stats:", error)
+      console.error("Error loading referral stats:", error)
     }
   }
 
@@ -94,7 +94,7 @@ export default function ReferralSystem({ user, profile }) {
     if (value && value.startsWith("BILLIONS-")) {
       // User entered a referral code
       localStorage.setItem("referral_code", value)
-      showSuccess("Referral code saved! You'll get bonus points when you sign up.")
+      showInfo("Referral code saved! You'll get bonus points when you sign up.")
     }
   }
 
@@ -193,7 +193,7 @@ export default function ReferralSystem({ user, profile }) {
 // Component for entering referral code during signup
 export function ReferralCodeInput({ onReferralCode }) {
   const [code, setCode] = useState("")
-  const { showInfo, showError } = useNotification()
+  const { showInfo } = useNotification()
 
   const handleSubmit = (e) => {
     e.preventDefault()

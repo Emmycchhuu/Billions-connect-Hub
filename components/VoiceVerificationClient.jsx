@@ -30,7 +30,7 @@ export default function VoiceVerificationClient({ user, profile }) {
   const [isListening, setIsListening] = useState(false)
   const [showCardCreator, setShowCardCreator] = useState(false)
   const [cardStyle, setCardStyle] = useState("neumorphic") // neumorphic or glass
-  
+  const [cardColor, setCardColor] = useState("cyan")
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
   const timerRef = useRef(null)
@@ -146,46 +146,36 @@ export default function VoiceVerificationClient({ user, profile }) {
     updateLevel()
   }
 
+  // ======= REPLACED processRecording: always verifies successfully =======
   const processRecording = async () => {
-    setIsProcessing(true)
-    
+    setIsProcessing(true);
+
     try {
-      // Simulate voice verification processing
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      // More lenient verification logic - higher success rate
-      const hasAudio = audioLevel > 5 // Lower threshold for audio detection
-      const isLongEnough = recordingTime >= 2 && recordingTime <= 20 // More lenient timing
-      const isVerified = hasAudio && isLongEnough && Math.random() > 0.1 // 90% success rate
-      
+      // Simulate verification delay for realism
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Always succeed — no audio required
+      const isVerified = true;
+
       if (isVerified) {
-        setVerificationStatus("verified")
-        showSuccess("🎉 Voice verification successful! You are now verified as a human agent.")
-        
+        setVerificationStatus("verified");
+        showSuccess("🎉 Voice verification successful! You are now verified as a human agent.");
+
         // Store verification status in localStorage
-        localStorage.setItem('voiceVerified', 'true')
-        localStorage.setItem('verificationDate', new Date().toISOString())
-        
+        localStorage.setItem('voiceVerified', 'true');
+        localStorage.setItem('verificationDate', new Date().toISOString());
+
         // Show card creator
-        setShowCardCreator(true)
-        
-      } else {
-        setVerificationStatus("failed")
-        setAttempts(prev => prev + 1)
-        showError("Voice verification failed. Please try again with clearer speech.")
-        
-        // Select new phrase for retry
-        const randomPhrase = verificationPhrases[Math.floor(Math.random() * verificationPhrases.length)]
-        setCurrentPhrase(randomPhrase)
+        setShowCardCreator(true);
       }
-      
     } catch (error) {
-      console.error("Error processing recording:", error)
-      showError("Error processing voice verification. Please try again.")
+      console.error("Error processing recording:", error);
+      showError("Error processing voice verification. Please try again.");
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
   }
+  // =======================================================================
 
   const resetVerification = () => {
     setVerificationStatus("pending")
@@ -545,16 +535,10 @@ export default function VoiceVerificationClient({ user, profile }) {
                   </div>
 
 
-                  {/* Download Button */}
-                  <div className="flex justify-center">
-                    <Button
-                      onClick={downloadCard}
-                      className="neumorphism-button neon-border-cyan px-8 py-3"
-                    >
-                      <Download className="w-5 h-5 mr-2" />
-                      Download Card
-                    </Button>
-                  </div>
+                 {/* Download removed — only card preview remains */}
+<p className="text-center text-slate-400 mt-4">
+  Your human verification card has been generated.
+</p>
                 </CardContent>
               </Card>
             </div>

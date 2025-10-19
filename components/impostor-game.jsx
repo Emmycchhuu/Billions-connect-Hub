@@ -144,7 +144,7 @@ export default function ImpostorGame({ user, profile }) {
           })
         })
       } catch (error) {
-        console.warn("Error adding experience:", error)
+        console.error("Error adding experience:", error)
       }
     } else {
       playSound("lose")
@@ -172,7 +172,7 @@ export default function ImpostorGame({ user, profile }) {
           })
         })
       } catch (error) {
-        console.warn("Error adding experience:", error)
+        console.error("Error adding experience:", error)
       }
     }
   }

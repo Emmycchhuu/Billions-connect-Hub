@@ -8,17 +8,7 @@ const NotificationContext = createContext()
 export const useNotification = () => {
   const context = useContext(NotificationContext)
   if (!context) {
-    // Fail-safe: don't throw so components won't crash in dev if the provider
-    // isn't mounted. Log a warning and return no-op functions.
-    console.warn("useNotification called without a NotificationProvider. Falling back to no-op notifications.")
-    return {
-      addNotification: () => {},
-      removeNotification: () => {},
-      showSuccess: () => {},
-      showError: () => {},
-      showInfo: () => {},
-      showWarning: () => {},
-    }
+    throw new Error("useNotification must be used within a NotificationProvider")
   }
   return context
 }
