@@ -61,7 +61,7 @@ export default function DashboardClient({ user, profile }) {
         "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/voice-card-placeholder.jpeg", // 🖼️ Replace this with your hosted image
       color: "emerald",
       points: "Bonus: 100 pts",
-      href: "/voice-verification",
+      href: "/VoiceVerificationClient",
     },
   ]
 
