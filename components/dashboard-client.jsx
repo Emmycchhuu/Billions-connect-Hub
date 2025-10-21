@@ -48,7 +48,7 @@ export default function DashboardClient({ user, profile }) {
       title: "Billions Quiz",
       description: "Test your knowledge in rapid-fire questions",
       image:
-        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_2346-u8L0SLhfElJSie0Jf6YNRhcAbmDVDb.png",
+        "https://ibb.co/B5G3Ygq4",
       color: "pink",
       points: "20-200 pts",
       href: "/games/quiz",
