@@ -61,7 +61,7 @@ export default function DashboardClient({ user, profile }) {
         "/images/IMG_3132.png", // 🖼️ Replace this with your hosted image
       color: "emerald",
       points: "Bonus: 100 pts",
-      href: "/voice-verification",
+      href: "/VoiceVerification",
     },
   ]
 
