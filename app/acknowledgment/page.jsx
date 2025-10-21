@@ -11,7 +11,7 @@ const members = [
   {
     name: "Dvm 💙",
     role: "Project Core Contributor",
-    img: "/images/dvm.png",
+    img: "/images/36469ee8-e098-417f-9e15-4c7f6c09e4b2.jpeg",
   },
   {
     name: "Big_D 💙",
