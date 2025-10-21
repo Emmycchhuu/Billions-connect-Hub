@@ -27,7 +27,7 @@ export default function DashboardClient({ user, profile }) {
     router.push("/")
   }
 
-  // 🎮 Games + Voice Verification Card
+  // 🎮 Games list
   const games = [
     {
       id: "impostor",
@@ -63,7 +63,7 @@ export default function DashboardClient({ user, profile }) {
       id: "voice",
       title: "Voice Verification",
       description: "Verify your identity with your voice and earn rewards",
-      image: "/images/IMG_3132.png", // ✅ image inside public/images/
+      image: "/images/IMG_3132.png",
       color: "emerald",
       points: "Bonus: 100 pts",
       href: "/voiceverification",
@@ -72,7 +72,7 @@ export default function DashboardClient({ user, profile }) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
-      {/* Light gradients for depth */}
+      {/* Light gradients */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(6,182,212,0.1),transparent_50%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_70%,rgba(168,85,247,0.1),transparent_50%)]" />
 
@@ -134,7 +134,7 @@ export default function DashboardClient({ user, profile }) {
                   <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-cyan-500/50">
                     <Image
                       src={profile.profile_picture || "/placeholder.svg"}
-                      alt={profile.username}
+                      alt={profile.username || "User"}
                       fill
                       className="object-cover"
                     />
@@ -144,7 +144,9 @@ export default function DashboardClient({ user, profile }) {
                   <p className="text-2xl font-bold text-slate-100">
                     {profile?.username || "Agent"}
                   </p>
-                  <p className="text-sm text-slate-400">{user.email}</p>
+                  <p className="text-sm text-slate-400">
+                    {user?.email || "Not logged in"}
+                  </p>
                 </div>
               </div>
               <Link href="/profile">
