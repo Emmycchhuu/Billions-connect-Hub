@@ -57,6 +57,7 @@ export default function DashboardClient({ user, profile }) {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_70%,rgba(168,85,247,0.1),transparent_50%)]" />
 
       <div className="relative z-10 container mx-auto px-4 py-8">
+        {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-12">
           <div className="flex items-center gap-4">
             <Image
@@ -73,6 +74,7 @@ export default function DashboardClient({ user, profile }) {
               <p className="text-slate-400 text-sm md:text-base">Welcome back, {profile?.username || "Agent"}</p>
             </div>
           </div>
+
           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
             <div className="bg-slate-900/50 backdrop-blur-xl border border-cyan-500/20 rounded-lg px-4 md:px-6 py-2 md:py-3 flex-1 md:flex-none">
               <div className="flex items-center gap-2 justify-center">
@@ -93,6 +95,7 @@ export default function DashboardClient({ user, profile }) {
           </div>
         </div>
 
+        {/* Profile + Points + Games Info */}
         <div className="grid md:grid-cols-3 gap-6 mb-12">
           <Card className="bg-slate-900/50 backdrop-blur-xl border-cyan-500/20">
             <CardHeader>
@@ -129,6 +132,7 @@ export default function DashboardClient({ user, profile }) {
               </Link>
             </CardContent>
           </Card>
+
           <Card className="bg-slate-900/50 backdrop-blur-xl border-purple-500/20">
             <CardHeader>
               <CardTitle className="text-purple-400 flex items-center gap-2">
@@ -140,6 +144,7 @@ export default function DashboardClient({ user, profile }) {
               <p className="text-3xl font-bold text-slate-100">{profile?.total_points || 0}</p>
             </CardContent>
           </Card>
+
           <Card className="bg-slate-900/50 backdrop-blur-xl border-pink-500/20">
             <CardHeader>
               <CardTitle className="text-pink-400 flex items-center gap-2">
@@ -153,6 +158,7 @@ export default function DashboardClient({ user, profile }) {
           </Card>
         </div>
 
+        {/* Games Section */}
         <div>
           <h2 className="text-2xl font-bold text-slate-100 mb-6">Choose Your Game</h2>
           <div className="grid md:grid-cols-3 gap-8">
@@ -191,19 +197,32 @@ export default function DashboardClient({ user, profile }) {
           </div>
         </div>
 
+        {/* Leaderboard + Acknowledgment */}
         <div className="mt-12">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
             <h2 className="text-2xl font-bold text-slate-100">Leaderboard</h2>
-            <Link href="/leaderboard">
-              <Button
-                variant="outline"
-                className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 bg-transparent"
-                onMouseEnter={() => playSound("hover")}
-              >
-                View Full Leaderboard
-              </Button>
-            </Link>
+            <div className="flex flex-wrap gap-3">
+              <Link href="/leaderboard">
+                <Button
+                  variant="outline"
+                  className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 bg-transparent"
+                  onMouseEnter={() => playSound("hover")}
+                >
+                  View Full Leaderboard
+                </Button>
+              </Link>
+              <Link href="/acknowledgment">
+                <Button
+                  variant="outline"
+                  className="border-purple-500/50 text-purple-400 hover:bg-purple-500/10 bg-transparent"
+                  onMouseEnter={() => playSound("hover")}
+                >
+                  💙 Acknowledgment
+                </Button>
+              </Link>
+            </div>
           </div>
+
           <Card className="bg-slate-900/50 backdrop-blur-xl border-cyan-500/20">
             <CardContent className="p-6">
               <p className="text-slate-400 text-center">Play games to see your ranking!</p>
