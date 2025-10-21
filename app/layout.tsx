@@ -5,8 +5,8 @@ import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'Billions Gaming Hub',
+  description: 'Play, Earn Points, climb leaderboards and connect with other players',
   generator: 'v0.app',
 }
 
