@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkbianance_wallet_extension=self.webpackChunkbianance_wallet_extension||[]).push([[474],{"2siN":(e,n,t)=>{t.d(n,{default:()=>l});var a=t("JIkk"),c=t("cLhu");t("rQSF");try{document.title="Binance Wallet"}catch(r){console.error(r)}function l(){return(0,a.jsx)(c.MA,{})}},rQSF:()=>{}}]);

@@ -282,32 +282,6 @@ export default function QuizGame({ user, profile }) {
       .from("profiles")
       .update({ total_points: (profile?.total_points || 0) + score })
       .eq("id", user.id)
-
-    // Refresh profile data
-    const { data: updatedProfile } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single()
-    
-    if (updatedProfile) {
-      window.dispatchEvent(new CustomEvent('profileUpdated', { detail: updatedProfile }))
-    }
-
-    // Add experience points
-    try {
-      await fetch("/api/add-experience", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: user.id,
-          gameType: "quiz",
-          pointsEarned: score
-        })
-      })
-    } catch (error) {
-      console.error("Error adding experience:", error)
-    }
   }
 
   const goToDashboard = () => {
@@ -409,7 +383,7 @@ export default function QuizGame({ user, profile }) {
 
             <Card className="bg-slate-900/80 backdrop-blur-xl border-pink-500/20">
               <CardHeader>
-                <CardTitle className="text-lg md:text-2xl text-slate-100 leading-relaxed break-words">{question.question}</CardTitle>
+                <CardTitle className="text-2xl text-slate-100 leading-relaxed">{question.question}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {question.options.map((option, index) => {
@@ -426,27 +400,23 @@ export default function QuizGame({ user, profile }) {
                   }
 
                   return (
-        <Button
-          key={index}
-          onClick={() => handleAnswerSelect(index)}
-          disabled={showResult || selectedAnswer !== null}
-          className={`w-full py-4 md:py-6 text-sm md:text-lg justify-start text-left ${buttonClass} transition-all duration-300 min-h-[60px] md:min-h-[80px] overflow-hidden`}
-          variant="outline"
-          onMouseEnter={() => playSound("hover")}
-        >
-          <div className="flex items-start gap-3 w-full min-w-0">
-            <span className="font-bold flex-shrink-0 mt-1">{String.fromCharCode(65 + index)}.</span>
-            <span className="flex-1 text-left break-words leading-relaxed overflow-wrap-anywhere hyphens-auto">{option}</span>
-            <div className="flex-shrink-0 ml-2">
-              {showResult && index === question.correct && (
-                <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-green-400" />
-              )}
-              {showResult && index === selectedAnswer && index !== question.correct && (
-                <XCircle className="w-4 h-4 md:w-5 md:h-5 text-red-400" />
-              )}
-            </div>
-          </div>
-        </Button>
+                    <Button
+                      key={index}
+                      onClick={() => handleAnswerSelect(index)}
+                      disabled={showResult || selectedAnswer !== null}
+                      className={`w-full py-6 text-lg justify-start text-left ${buttonClass} transition-all duration-300`}
+                      variant="outline"
+                      onMouseEnter={() => playSound("hover")}
+                    >
+                      <span className="mr-4 font-bold">{String.fromCharCode(65 + index)}.</span>
+                      {option}
+                      {showResult && index === question.correct && (
+                        <CheckCircle2 className="w-5 h-5 ml-auto text-green-400" />
+                      )}
+                      {showResult && index === selectedAnswer && index !== question.correct && (
+                        <XCircle className="w-5 h-5 ml-auto text-red-400" />
+                      )}
+                    </Button>
                   )
                 })}
               </CardContent>

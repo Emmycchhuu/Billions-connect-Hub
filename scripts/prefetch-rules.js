@@ -1,0 +1,1 @@
+var runtimeConfig = {"__ACCELERATE_ENABLED__":false};window._bn_http_init = window._bn_http_init || [];window._bn_http_init.push({accelerateConfig: runtimeConfig,baseUrl: "",});

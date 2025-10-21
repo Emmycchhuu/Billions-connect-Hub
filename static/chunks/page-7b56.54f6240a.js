@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkbianance_wallet_extension=self.webpackChunkbianance_wallet_extension||[]).push([[222],{LGbC:(e,n,a)=>{a.d(n,{default:()=>l});var t=a("JIkk"),k=a("Ejmk"),s=a("UMP8");a("kVjX"),a("N9hv"),a("AXH1"),a("GTZt");function l(){return(0,t.jsx)(k.Z,{})}(0,s.X)()}}]);

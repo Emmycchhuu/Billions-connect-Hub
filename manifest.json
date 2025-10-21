@@ -1,0 +1,68 @@
+{
+"update_url": "https://clients2.google.com/service/update2/crx",
+
+  "name": "Binance Wallet",
+  "description": "Binance Wallet a next-generation wallet that leverages exclusive MPC (Multi-Party Computation) technology.",
+  "version": "1.1.0",
+  "manifest_version": 3,
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "run_at": "document_idle",
+      "js": [
+        "content/index.js"
+      ],
+      "all_frames": true
+    }
+  ],
+  "icons": {
+    "16": "resource/extension_icon16.png",
+    "32": "resource/extension_icon32.png",
+    "48": "resource/extension_icon48.png",
+    "128": "resource/extension_icon128.png"
+  },
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": "resource/extension_icon48.png"
+  },
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "inpage.js"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    },
+    {
+      "resources": [
+        "/resource/mpcsdk.wasm"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "permissions": [
+    "activeTab",
+    "alarms",
+    "clipboardWrite",
+    "scripting",
+    "storage",
+    "unlimitedStorage",
+    "tabs"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+  }
+}

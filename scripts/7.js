@@ -1,0 +1,1 @@
+__bianance_wallet_extension_dynamic_public_path__ = "/"

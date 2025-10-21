@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkbianance_wallet_extension=self.webpackChunkbianance_wallet_extension||[]).push([[555],{PyiV:(e,n,a)=>{a.r(n),a.d(n,{default:()=>s});const s={"22f7":!1,"5e25":!1,eabb:!1,"7b56":!1}}}]);

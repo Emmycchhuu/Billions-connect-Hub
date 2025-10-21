@@ -12,7 +12,7 @@ const getUserAndProfile = cache(async () => {
   } = await supabase.auth.getUser()
 
   if (userError || !user) {
-    return { user: null, profile: null, leaderboard: null }
+    return { user: null, profile: null }
   }
 
   const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("id", user.id).single()
@@ -33,22 +33,15 @@ const getUserAndProfile = cache(async () => {
     userProfile = newProfile
   }
 
-  // Fetch leaderboard data
-  const { data: leaderboard } = await supabase
-    .from("profiles")
-    .select("id, username, total_points, profile_picture")
-    .order("total_points", { ascending: false })
-    .limit(10)
-
-  return { user, profile: userProfile, leaderboard }
+  return { user, profile: userProfile }
 })
 
 export default async function DashboardPage() {
-  const { user, profile, leaderboard } = await getUserAndProfile()
+  const { user, profile } = await getUserAndProfile()
 
   if (!user) {
     redirect("/auth/login")
   }
 
-  return <DashboardClient user={user} profile={profile} leaderboard={leaderboard} />
+  return <DashboardClient user={user} profile={profile} />
 }

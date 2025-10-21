@@ -5,12 +5,10 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Trophy, Sparkles } from "lucide-react"
+import { ArrowLeft, Trophy, Coins, Sparkles } from "lucide-react"
 import { playSound } from "@/lib/sounds"
 import Link from "next/link"
 import Image from "next/image"
-import { useNotification } from "@/components/NotificationSystem"
-import { PointsDisplay } from "@/components/CurrencyDisplay"
 
 const symbols = [
   { id: "blue", image: "/images/toy-blue.png", value: 50, color: "text-blue-400", name: "Blue Buddy" },
@@ -20,13 +18,12 @@ const symbols = [
 
 export default function SpinGame({ user, profile }) {
   const router = useRouter()
-  const { showSuccess, showError } = useNotification()
   const [gameState, setGameState] = useState("ready")
   const [reels, setReels] = useState([symbols[0], symbols[0], symbols[0]])
   const [isSpinning, setIsSpinning] = useState(false)
   const [totalScore, setTotalScore] = useState(0)
   const [lastWin, setLastWin] = useState(0)
-  const [spinsLeft, setSpinsLeft] = useState(Infinity)
+  const [spinsLeft, setSpinsLeft] = useState(5)
   const [currentPoints, setCurrentPoints] = useState(profile?.total_points || 0)
   const spinCost = 50
 
@@ -35,28 +32,18 @@ export default function SpinGame({ user, profile }) {
   }, [profile])
 
   const spinReels = async () => {
-    if (isSpinning || currentPoints < spinCost) return
+    if (isSpinning || spinsLeft <= 0 || currentPoints < spinCost) return
 
     playSound("click")
     setIsSpinning(true)
     setGameState("spinning")
+    setSpinsLeft(spinsLeft - 1)
 
     const newPoints = currentPoints - spinCost
     setCurrentPoints(newPoints)
 
     const supabase = createClient()
     await supabase.from("profiles").update({ total_points: newPoints }).eq("id", user.id)
-    
-    // Refresh profile data
-    const { data: updatedProfile } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single()
-    
-    if (updatedProfile) {
-      window.dispatchEvent(new CustomEvent('profileUpdated', { detail: updatedProfile }))
-    }
 
     const spinDuration = 2000
     const spinInterval = 100
@@ -91,16 +78,13 @@ export default function SpinGame({ user, profile }) {
     if (finalReels[0].id === finalReels[1].id && finalReels[1].id === finalReels[2].id) {
       winAmount = finalReels[0].value * 3
       playSound("win")
-      showSuccess(`🎉 Triple Match! You won ₿${winAmount}!`)
     } else if (finalReels[0].id === finalReels[1].id || finalReels[1].id === finalReels[2].id) {
       const matchedSymbol = finalReels[0].id === finalReels[1].id ? finalReels[0] : finalReels[1]
       winAmount = matchedSymbol.value
       playSound("win")
-      showSuccess(`🎯 Double Match! You won ₿${winAmount}!`)
     } else {
       winAmount = 0
       playSound("lose")
-      showError(`No match! Lost ₿${spinCost}`)
     }
 
     setLastWin(winAmount)
@@ -122,32 +106,6 @@ export default function SpinGame({ user, profile }) {
       const finalPoints = pointsAfterSpin + winAmount
       setCurrentPoints(finalPoints)
       await supabase.from("profiles").update({ total_points: finalPoints }).eq("id", user.id)
-      
-      // Refresh profile data
-      const { data: updatedProfile } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single()
-      
-      if (updatedProfile) {
-        window.dispatchEvent(new CustomEvent('profileUpdated', { detail: updatedProfile }))
-      }
-    }
-
-    // Add experience points
-    try {
-      await fetch("/api/add-experience", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: user.id,
-          gameType: "spin",
-          pointsEarned: winAmount
-        })
-      })
-    } catch (error) {
-      console.error("Error adding experience:", error)
     }
 
     setTimeout(() => {
@@ -161,6 +119,7 @@ export default function SpinGame({ user, profile }) {
 
   const resetGame = () => {
     playSound("click")
+    setSpinsLeft(5)
     setTotalScore(0)
     setLastWin(0)
     setGameState("ready")
@@ -173,7 +132,7 @@ export default function SpinGame({ user, profile }) {
     router.push("/dashboard")
   }
 
-  const canSpin = currentPoints >= spinCost
+  const canSpin = currentPoints >= spinCost && spinsLeft > 0
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
@@ -192,6 +151,13 @@ export default function SpinGame({ user, profile }) {
             </Button>
           </Link>
           <div className="flex items-center gap-4">
+            <div className="bg-slate-900/50 backdrop-blur-xl border border-purple-500/20 rounded-lg px-4 py-2">
+              <div className="flex items-center gap-2">
+                <Coins className="w-4 h-4 text-purple-400" />
+                <span className="text-sm text-slate-400">Spins:</span>
+                <span className="text-lg font-bold text-purple-400">{spinsLeft}</span>
+              </div>
+            </div>
             <div className="bg-slate-900/50 backdrop-blur-xl border border-cyan-500/20 rounded-lg px-4 py-2">
               <div className="flex items-center gap-2">
                 <Trophy className="w-4 h-4 text-yellow-400" />
@@ -207,17 +173,17 @@ export default function SpinGame({ user, profile }) {
               Billions Spin
             </h1>
             <p className="text-slate-400 text-lg">Match the Billions toys to win big rewards!</p>
-            <p className="text-slate-500 text-sm mt-2">₿{spinCost} per spin</p>
+            <p className="text-slate-500 text-sm mt-2">{spinCost} points per spin</p>
           </div>
 
           <Card className="bg-slate-900/80 backdrop-blur-xl border-purple-500/20 mb-8">
-            <CardContent className="p-4 md:p-8">
-              <div className="bg-gradient-to-br from-purple-900/30 to-pink-900/30 rounded-2xl p-4 md:p-8 border-2 border-purple-500/30 mb-6">
-                <div className="grid grid-cols-3 gap-3 md:gap-6 mb-6">
+            <CardContent className="p-8">
+              <div className="bg-gradient-to-br from-purple-900/30 to-pink-900/30 rounded-2xl p-8 border-2 border-purple-500/30 mb-6">
+                <div className="grid grid-cols-3 gap-6 mb-6">
                   {reels.map((symbol, index) => (
                     <div
                       key={index}
-                      className={`aspect-square bg-slate-800/50 rounded-3xl border-4 border-purple-500/30 flex items-center justify-center p-2 md:p-6 ${
+                      className={`aspect-square bg-slate-800/50 rounded-3xl border-4 border-purple-500/30 flex items-center justify-center p-6 ${
                         isSpinning ? "animate-pulse" : ""
                       }`}
                     >
@@ -226,7 +192,7 @@ export default function SpinGame({ user, profile }) {
                           src={symbol.image || "/placeholder.svg"}
                           alt={symbol.name}
                           fill
-                          className="object-contain scale-150 md:scale-100"
+                          className="object-contain"
                         />
                       </div>
                     </div>
@@ -237,13 +203,9 @@ export default function SpinGame({ user, profile }) {
                   <div className="text-center animate-in fade-in duration-500">
                     <div className="bg-slate-900/80 rounded-lg p-4 inline-block">
                       <p className="text-slate-400 text-sm mb-1">{lastWin > 0 ? "You won" : "No match - Lost"}</p>
-                      <PointsDisplay 
-                        points={lastWin > 0 ? lastWin - spinCost : -spinCost} 
-                        showChange={true}
-                        changeAmount={lastWin > 0 ? lastWin - spinCost : -spinCost}
-                        size="4xl"
-                        className={lastWin > 0 ? "text-cyan-400" : "text-red-400"}
-                      />
+                      <p className={`text-4xl font-bold ${lastWin > 0 ? "text-cyan-400" : "text-red-400"}`}>
+                        {lastWin > 0 ? `+${lastWin - spinCost}` : `-${spinCost}`}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -261,9 +223,13 @@ export default function SpinGame({ user, profile }) {
                       Spinning...
                     </span>
                   ) : !canSpin ? (
-                    "Not Enough Points"
+                    spinsLeft <= 0 ? (
+                      "No Spins Left"
+                    ) : (
+                      "Not Enough Points"
+                    )
                   ) : (
-                    `SPIN (₿${spinCost})`
+                    `SPIN (${spinCost} pts)`
                   )}
                 </Button>
               </div>
@@ -280,12 +246,12 @@ export default function SpinGame({ user, profile }) {
                 {symbols.map((symbol) => (
                   <div key={symbol.id} className="flex items-center justify-between bg-slate-800/50 rounded-lg p-4">
                     <div className="flex items-center gap-3">
-                      <div className="relative w-16 h-16 md:w-12 md:h-12 rounded-full bg-slate-700/50 p-2">
+                      <div className="relative w-12 h-12 rounded-full bg-slate-700/50 p-2">
                         <Image
                           src={symbol.image || "/placeholder.svg"}
                           alt={symbol.name}
                           fill
-                          className="object-contain scale-125 md:scale-100"
+                          className="object-contain"
                         />
                       </div>
                       <span className="text-slate-300">{symbol.name} x3</span>

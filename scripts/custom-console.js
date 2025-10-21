@@ -1,0 +1,1 @@
+try{if(!Boolean(localStorage.getItem("enableLog"))){window.console.log=window.console.warn=window.console.info=window.console.debug=function noop(){};}}catch(e){}

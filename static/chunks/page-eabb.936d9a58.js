@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkbianance_wallet_extension=self.webpackChunkbianance_wallet_extension||[]).push([[852],{wB0S:(e,n,t)=>{t.d(n,{default:()=>k});var a=t("JIkk"),i=t("RplH"),u=t("Ejmk"),s=t("UMP8"),c=t("8dNr"),f=t("o4ru");t("kVjX"),t("N9hv"),t("AXH1"),t("GTZt");function k(){return(0,i.useEffect)((function(){c.fQ.view(f.i.dapp_noti)}),[]),(0,a.jsx)(u.Z,{})}(0,s.X)()}}]);

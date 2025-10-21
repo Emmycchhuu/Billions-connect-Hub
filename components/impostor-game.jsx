@@ -9,8 +9,6 @@ import { ArrowLeft, Trophy, Timer, Target } from "lucide-react"
 import { playSound } from "@/lib/sounds"
 import Image from "next/image"
 import Link from "next/link"
-import { useNotification } from "@/components/NotificationSystem"
-import { PointsDisplay } from "@/components/CurrencyDisplay"
 
 const characters = [
   {
@@ -53,9 +51,8 @@ const characters = [
 
 export default function ImpostorGame({ user, profile }) {
   const router = useRouter()
-  const { showSuccess, showError } = useNotification()
   const [gameState, setGameState] = useState("ready") // ready, playing, won, lost
-  const [selectedCard, setSelectedCard] = useState(null)
+  const [selectedCards, setSelectedCards] = useState([])
   const [impostorId, setImpostorId] = useState(null)
   const [timeLeft, setTimeLeft] = useState(30)
   const [score, setScore] = useState(0)
@@ -78,32 +75,30 @@ export default function ImpostorGame({ user, profile }) {
     setImpostorId(characters[randomIndex].id)
     setGameState("playing")
     setTimeLeft(30)
-    setSelectedCard(null)
+    setSelectedCards([])
   }
 
   const handleCardClick = (cardId) => {
-    if (gameState !== "playing") return
+    if (gameState !== "playing" || selectedCards.includes(cardId)) return
 
     playSound("click")
-    setSelectedCard(cardId)
+    setSelectedCards([...selectedCards, cardId])
   }
 
   const handleSubmit = async () => {
-    if (selectedCard === null || gameState !== "playing") return
+    if (selectedCards.length === 0 || gameState !== "playing") return
 
     playSound("click")
     setIsSubmitting(true)
 
     // Check if user selected the impostor
-    const isCorrect = selectedCard === impostorId
+    const isCorrect = selectedCards.includes(impostorId)
 
     if (isCorrect) {
       const pointsEarned = Math.floor(50 + timeLeft * 2)
       setScore(score + pointsEarned)
       playSound("win")
       setGameState("won")
-      
-      showSuccess(`Correct! You earned ₿${pointsEarned} points!`)
 
       // Save to database
       const supabase = createClient()
@@ -119,36 +114,8 @@ export default function ImpostorGame({ user, profile }) {
         .from("profiles")
         .update({ total_points: (profile?.total_points || 0) + pointsEarned })
         .eq("id", user.id)
-
-      // Refresh profile data
-      const { data: updatedProfile } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single()
-      
-      if (updatedProfile) {
-        // Update the profile in the parent component
-        window.dispatchEvent(new CustomEvent('profileUpdated', { detail: updatedProfile }))
-      }
-
-      // Add experience points
-      try {
-        await fetch("/api/add-experience", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: user.id,
-            gameType: "impostor",
-            pointsEarned: pointsEarned
-          })
-        })
-      } catch (error) {
-        console.error("Error adding experience:", error)
-      }
     } else {
       playSound("lose")
-      showError("Wrong answer! Try again next round.")
       handleGameOver(false)
     }
 
@@ -159,21 +126,6 @@ export default function ImpostorGame({ user, profile }) {
     setGameState(won ? "won" : "lost")
     if (!won) {
       playSound("lose")
-      
-      // Add experience points even for losing (encourage playing)
-      try {
-        await fetch("/api/add-experience", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: user.id,
-            gameType: "impostor",
-            pointsEarned: 0
-          })
-        })
-      } catch (error) {
-        console.error("Error adding experience:", error)
-      }
     }
   }
 
@@ -243,7 +195,7 @@ export default function ImpostorGame({ user, profile }) {
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-cyan-400 mt-1">•</span>
-                      <span>Click on ONE card you think is the impostor</span>
+                      <span>Click on the card you think is the impostor</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-cyan-400 mt-1">•</span>
@@ -284,14 +236,14 @@ export default function ImpostorGame({ user, profile }) {
                   onClick={() => handleCardClick(character.id)}
                   onMouseEnter={() => playSound("hover")}
                   className={`cursor-pointer transition-all duration-300 ${
-                    selectedCard === character.id
+                    selectedCards.includes(character.id)
                       ? "scale-95 ring-4 ring-cyan-500 ring-offset-4 ring-offset-slate-950"
                       : "hover:scale-105"
                   }`}
                 >
                   <Card
                     className={`bg-slate-900/80 backdrop-blur-xl border-2 overflow-hidden ${
-                      selectedCard === character.id ? "border-cyan-500" : "border-slate-700/50"
+                      selectedCards.includes(character.id) ? "border-cyan-500" : "border-slate-700/50"
                     }`}
                   >
                     <div className="relative aspect-[3/2]">
@@ -301,15 +253,6 @@ export default function ImpostorGame({ user, profile }) {
                         fill
                         className="object-cover"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                      <div className="absolute bottom-0 left-0 right-0 p-4">
-                        <h3 className="text-white font-bold text-lg md:text-xl leading-tight">
-                          {character.name}
-                        </h3>
-                        <p className="text-cyan-300 text-sm font-medium">
-                          Agent ID: {character.id}
-                        </p>
-                      </div>
                     </div>
                   </Card>
                 </div>
@@ -319,7 +262,7 @@ export default function ImpostorGame({ user, profile }) {
             <div className="flex justify-center">
               <Button
                 onClick={handleSubmit}
-                disabled={selectedCard === null || isSubmitting}
+                disabled={selectedCards.length === 0 || isSubmitting}
                 className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white font-semibold px-12 py-6 text-lg disabled:opacity-50"
               >
                 {isSubmitting ? "Submitting..." : "Submit Answer"}
