@@ -48,7 +48,7 @@ export default function DashboardClient({ user, profile }) {
       title: "Billions Quiz",
       description: "Test your knowledge in rapid-fire questions",
       image:
-        "https://ibb.co/B5G3Ygq4",
+        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_2346-u8L0SLhfElJSie0Jf6YNRhcAbmDVDb.png",
       color: "pink",
       points: "20-200 pts",
       href: "/games/quiz",
@@ -58,10 +58,10 @@ export default function DashboardClient({ user, profile }) {
       title: "Voice Verification",
       description: "Verify your identity with your voice and earn rewards",
       image:
-        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/voice-card-placeholder.jpeg", // 🖼️ Replace this with your hosted image
+        "https://ibb.co/B5G3Ygq4", // 🖼️ Replace this with your hosted image
       color: "emerald",
       points: "Bonus: 100 pts",
-      href: "/VoiceVerificationClient",
+      href: "/voiceverification",
     },
   ]
 
