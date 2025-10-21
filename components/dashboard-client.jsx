@@ -58,7 +58,7 @@ export default function DashboardClient({ user, profile }) {
       title: "Voice Verification",
       description: "Verify your identity with your voice and earn rewards",
       image:
-        "https://ibb.co/B5G3Ygq4", // 🖼️ Replace this with your hosted image
+        "IMG_3132.png", // 🖼️ Replace this with your hosted image
       color: "emerald",
       points: "Bonus: 100 pts",
       href: "/voice-verification",
