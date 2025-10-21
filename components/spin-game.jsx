@@ -176,18 +176,20 @@ export default function SpinGame({ user, profile }) {
             <p className="text-slate-500 text-sm mt-2">{spinCost} points per spin</p>
           </div>
 
+          {/* 🎯 Responsive reels section */}
           <Card className="bg-slate-900/80 backdrop-blur-xl border-purple-500/20 mb-8">
             <CardContent className="p-8">
-              <div className="bg-gradient-to-br from-purple-900/30 to-pink-900/30 rounded-2xl p-8 border-2 border-purple-500/30 mb-6">
-                <div className="grid grid-cols-3 gap-6 mb-6">
+              <div className="bg-gradient-to-br from-purple-900/30 to-pink-900/30 rounded-2xl p-6 sm:p-8 border-2 border-purple-500/30 mb-6">
+                <div className="grid grid-cols-3 gap-3 sm:gap-6 mb-6">
                   {reels.map((symbol, index) => (
                     <div
                       key={index}
-                      className={`aspect-square bg-slate-800/50 rounded-3xl border-4 border-purple-500/30 flex items-center justify-center p-6 ${
-                        isSpinning ? "animate-pulse" : ""
-                      }`}
+                      className={`bg-slate-800/50 rounded-2xl sm:rounded-3xl border-4 border-purple-500/30 flex items-center justify-center
+                        aspect-[3/4] sm:aspect-square max-h-[140px] sm:max-h-[250px] w-full mx-auto p-3 sm:p-6 ${
+                          isSpinning ? "animate-pulse" : ""
+                        }`}
                     >
-                      <div className={`relative w-full h-full ${isSpinning ? "blur-sm" : ""}`}>
+                      <div className={`relative w-5/6 h-5/6 sm:w-full sm:h-full ${isSpinning ? "blur-sm" : ""}`}>
                         <Image
                           src={symbol.image || "/placeholder.svg"}
                           alt={symbol.name}
@@ -215,7 +217,7 @@ export default function SpinGame({ user, profile }) {
                 <Button
                   onClick={spinReels}
                   disabled={isSpinning || !canSpin}
-                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold px-16 py-8 text-2xl disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold px-12 sm:px-16 py-6 sm:py-8 text-xl sm:text-2xl disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSpinning ? (
                     <span className="flex items-center gap-2">
@@ -223,11 +225,7 @@ export default function SpinGame({ user, profile }) {
                       Spinning...
                     </span>
                   ) : !canSpin ? (
-                    spinsLeft <= 0 ? (
-                      "No Spins Left"
-                    ) : (
-                      "Not Enough Points"
-                    )
+                    spinsLeft <= 0 ? "No Spins Left" : "Not Enough Points"
                   ) : (
                     `SPIN (${spinCost} pts)`
                   )}
@@ -236,6 +234,7 @@ export default function SpinGame({ user, profile }) {
             </CardContent>
           </Card>
 
+          {/* 🏆 Prize Table */}
           <Card className="bg-slate-900/80 backdrop-blur-xl border-cyan-500/20">
             <CardHeader>
               <CardTitle className="text-cyan-400">Prize Table</CardTitle>
@@ -271,6 +270,7 @@ export default function SpinGame({ user, profile }) {
             </CardContent>
           </Card>
 
+          {/* ✅ Game Finished */}
           {gameState === "finished" && (
             <Card className="bg-slate-900/80 backdrop-blur-xl border-green-500/20 mt-8">
               <CardHeader className="text-center">
@@ -283,7 +283,7 @@ export default function SpinGame({ user, profile }) {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
                   <Button
                     onClick={resetGame}
                     disabled={(profile?.total_points || 0) < spinCost}
