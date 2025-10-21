@@ -4,8 +4,8 @@ import Image from "next/image"
 
 const members = [
   {
-    name: "Hizzy 💙",
-    role: "Project Advisor & Contributor",
+    name: "Big_D 💙",
+    role: "Project core contributor ",
     img: "/images/hizzy.png", // replace with your actual image
   },
   {
@@ -14,8 +14,8 @@ const members = [
     img: "/images/36469ee8-e098-417f-9e15-4c7f6c09e4b2.jpeg",
   },
   {
-    name: "Big_D 💙",
-    role: "Project Core Contributor",
+    name: "Hizzy 💙",
+    role: "Project Advisor and Contributor",
     img: "/images/big_d.png",
   },
 ]
