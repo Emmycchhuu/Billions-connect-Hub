@@ -61,7 +61,7 @@ export default function DashboardClient({ user, profile }) {
         "https://ibb.co/B5G3Ygq4", // 🖼️ Replace this with your hosted image
       color: "emerald",
       points: "Bonus: 100 pts",
-      href: "/voiceverification",
+      href: "/voice-verification",
     },
   ]
 
